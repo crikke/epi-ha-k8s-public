@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: epi-k8s-demo
+  name: epi-k8s
+spec:
+  strategy:
+    type: Recreate
+  replicas: 2
+  selector:
+    matchLabels:
+      app: epi-k8s-demo
+  template:
+    metadata:
+      labels:
+        app: epi-k8s-demo
+    spec:
+      volumes:
+      - name: license
+        configMap:
+          name: epi-demo-license
+      - name: sa-secret
+        secret:
+          secretName: epi-k8s-demo-sa-secret
+
+      containers:
+      - image: crikke95/epi-k8s-demo:1.0.1
+        name: epidemo
+        volumeMounts:
+        - name: license
+          mountPath: /etc/app
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Development
+        - name: DATABASE_CONNECTIONSTRING
+          valueFrom:
+            secretKeyRef:
+              name: epi-connectionstring
+              key: database
+        - name: BLOBSTORAGE_CONNECTIONSTRING
+          valueFrom:
+            secretKeyRef:
+              name: epi-connectionstring
+              key: blobstorage
+        - name: SERVICEBUS_CONNECTIONSTRING
+          valueFrom:
+            secretKeyRef:
+              name: epi-connectionstring
+              key: eventprovider
+        resources: {}
